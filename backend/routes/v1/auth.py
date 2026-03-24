@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from datetime import timedelta
 from lib.database.main import get_session
-from lib.database.models.account import Account
+from lib.database.models.account import Account, AccountType
 from lib.database.models.schemas import UserCreate, UserLogin, Token, PasswordResetRequest, PasswordResetConfirm
 from lib.auth import get_password_hash, verify_password, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES, SECRET_KEY, ALGORITHM
 from lib.logger import logger
@@ -18,12 +18,16 @@ async def register(user: UserCreate, db: Session = Depends(get_session)):
         logger.warning(f"Registration failed: Email {user.email} already exists.")
         raise HTTPException(status_code=400, detail="Email already registered")
     
+    # Check if this is the first user to register
+    user_count = db.query(Account).count()
+    account_type = AccountType.ADMIN if user_count == 0 else AccountType.CUSTOMER
+    
     hashed_password = get_password_hash(user.password)
-    # ...
     new_user = Account(
         name=user.name,
         email=user.email,
-        hashed_password=hashed_password
+        hashed_password=hashed_password,
+        type=account_type
     )
     db.add(new_user)
     db.commit()
@@ -85,3 +89,11 @@ async def reset_password(request: PasswordResetConfirm, db: Session = Depends(ge
     db.commit()
     
     return {"message": "Password has been successfully reset"}
+
+@router.post("/verify-otp")
+async def verify_otp(otp_data: dict, db: Session = Depends(get_session)):
+    # Mock OTP verification for prototype
+    otp = otp_data.get("otp")
+    if otp == "123456":
+        return {"message": "OTP verified successfully"}
+    raise HTTPException(status_code=400, detail="Invalid OTP code")

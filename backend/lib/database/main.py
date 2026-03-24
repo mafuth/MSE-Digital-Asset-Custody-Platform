@@ -14,6 +14,7 @@ def create_db_and_tables():
     from .models.deposit import Deposit
     from .models.transaction import Transaction
     from .models.market_history import MetalMarketHistory
+    from .models.vault import Vault
     SQLModel.metadata.create_all(engine)
 
 def get_session():

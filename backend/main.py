@@ -3,9 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, select
 from lib.database.main import create_db_and_tables, engine, get_session
 from lib.database.models.metal import Metal
-from routes.v1 import auth, metals, transactions, accounts
+from routes.v1 import auth, metals, transactions, accounts, public, admin, vaults
 from lib.websocket_manager import manager
-from lib.jobs.price_update import run_price_update_job
 from lib.logger import logger
 import json
 import asyncio
@@ -21,19 +20,10 @@ async def lifespan(app: FastAPI):
     create_db_and_tables()
     logger.info("Database tables created/verified.")
     
-    # Start the background price update job
-    price_job = asyncio.create_task(run_price_update_job(interval_seconds=60))
-    logger.info("Background price update job started.")
     
     yield
     
     # Shutdown logic
-    logger.info("Shutting down... Cleaning up background tasks.")
-    price_job.cancel()
-    try:
-        await price_job
-    except asyncio.CancelledError:
-        logger.info("Price update job successfully cancelled.")
 
 app = FastAPI(title="Bare Metals Pvt. API", lifespan=lifespan)
 
@@ -51,6 +41,9 @@ app.include_router(auth.router)
 app.include_router(metals.router)
 app.include_router(transactions.router)
 app.include_router(accounts.router)
+app.include_router(public.router)
+app.include_router(admin.router)
+app.include_router(vaults.router)
 
 @app.get("/")
 def read_root():

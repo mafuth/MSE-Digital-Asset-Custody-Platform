@@ -1,0 +1,61 @@
+<script lang="ts">
+	import CalendarIcon from "@lucide/svelte/icons/calendar";
+	import type { DateRange } from "bits-ui";
+	import {
+		CalendarDate,
+		DateFormatter,
+		type DateValue,
+		getLocalTimeZone,
+	} from "@internationalized/date";
+	import { cn } from "$lib/utils.js";
+	import { Button } from "$lib/components/ui/button/index.js";
+	import { RangeCalendar } from "$lib/components/ui/range-calendar/index.js";
+	import * as Popover from "$lib/components/ui/popover/index.js";
+
+	const df = new DateFormatter("en-US", {
+		dateStyle: "medium",
+	});
+
+	let { value = $bindable(), class: className } = $props<{
+		value: DateRange | undefined;
+		class?: string;
+	}>();
+</script>
+
+<div class={cn("grid gap-2", className)}>
+	<Popover.Root>
+		<Popover.Trigger>
+			{#snippet child({ props })}
+				<Button
+					variant="outline"
+					class={cn(
+						"w-[300px] justify-start text-left font-normal",
+						!value && "text-muted-foreground"
+					)}
+					{...props}
+				>
+					<CalendarIcon class="mr-2 h-4 w-4" />
+					{#if value && value.start}
+						{#if value.end}
+							{df.format(value.start.toDate(getLocalTimeZone()))} - {df.format(
+								value.end.toDate(getLocalTimeZone())
+							)}
+						{:else}
+							{df.format(value.start.toDate(getLocalTimeZone()))}
+						{/if}
+					{:else}
+						Pick a date
+					{/if}
+				</Button>
+			{/snippet}
+		</Popover.Trigger>
+		<Popover.Content class="w-auto p-0" align="start">
+			<RangeCalendar
+				bind:value
+				initialFocus
+				numberOfMonths={2}
+				placeholder={value?.start}
+			/>
+		</Popover.Content>
+	</Popover.Root>
+</div>

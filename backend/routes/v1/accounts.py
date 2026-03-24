@@ -13,12 +13,42 @@ router = APIRouter(prefix="/api/v1/accounts", tags=["accounts v1"])
 async def get_me(current_user: Account = Depends(get_current_user)):
     return current_user
 
+@router.post("/buy-storage")
+async def buy_storage(
+    plan_id: str,
+    db: Session = Depends(get_session),
+    current_user: Account = Depends(get_current_user)
+):
+    # Mock storage plans
+    plans = {
+        "starter": 100.0,
+        "pro": 500.0,
+        "enterprise": 5000.0
+    }
+    
+    if plan_id not in plans:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="Invalid plan ID")
+    
+    # Increase purchased storage capacity
+    current_user.purchased_storage_kg += plans[plan_id]
+    db.add(current_user)
+    db.commit()
+    db.refresh(current_user)
+    
+    return {"message": f"Successfully purchased {plans[plan_id]}kg storage", "new_limit": current_user.purchased_storage_kg}
+
 @router.get("/portfolio", tags=["valuation v1"])
 async def get_portfolio(
     db: Session = Depends(get_session),
     current_user: Account = Depends(get_current_user)
 ):
+    from lib.database.models.vault import Vault
     deposits = db.query(Deposit).filter(Deposit.account_id == current_user.id).all()
+    vaults = db.query(Vault).all()
+    
+    total_physical_capacity = sum(v.capacity_kg for v in vaults)
+    total_physical_load = sum(v.current_load_kg for v in vaults)
     
     portfolio = {}
     total_valuation = 0.0
@@ -27,6 +57,7 @@ async def get_portfolio(
         metal = deposit.metal
         if metal.code not in portfolio:
             portfolio[metal.code] = {
+                "id": str(metal.id),
                 "name": metal.name,
                 "quantity": 0.0,
                 "valuation": 0.0,
@@ -46,5 +77,12 @@ async def get_portfolio(
     return {
         "user_id": str(current_user.id),
         "assets": portfolio,
-        "total_valuation": total_valuation
+        "total_valuation": total_valuation,
+        "total_weight_kg": sum(p["quantity"] for p in portfolio.values()),
+        "purchased_storage_kg": current_user.purchased_storage_kg,
+        "vault_metrics": {
+            "total_capacity_kg": total_physical_capacity,
+            "total_load_kg": total_physical_load,
+            "available_physical_kg": total_physical_capacity - total_physical_load
+        }
     }
