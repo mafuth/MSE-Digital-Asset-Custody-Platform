@@ -8,7 +8,7 @@ from lib.auth import get_password_hash, verify_password, create_access_token, AC
 from lib.logger import logger
 from jose import jwt, JWTError
 
-router = APIRouter(prefix="/api/v1/auth", tags=["api","v1","auth"])
+router = APIRouter(prefix="/api/v1/auth", tags=["auth v1"])
 
 @router.post("/register", response_model=Account)
 async def register(user: UserCreate, db: Session = Depends(get_session)):

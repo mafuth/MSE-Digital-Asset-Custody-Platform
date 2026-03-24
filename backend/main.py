@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, select
 from lib.database.main import create_db_and_tables, engine, get_session
 from lib.database.models.metal import Metal
-from routes import auth, metals, transactions, accounts
+from routes.v1 import auth, metals, transactions, accounts
 from lib.websocket_manager import manager
 from lib.jobs.price_update import run_price_update_job
 from lib.logger import logger
@@ -11,9 +11,31 @@ import json
 import asyncio
 import random
 from datetime import datetime
+from contextlib import asynccontextmanager
 import uvicorn
 
-app = FastAPI(title="Bare Metals Pvt. API")
+# Lifespan manager for modern FastAPI startup/shutdown
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("Initializing Bare Metals Pvt. API Backend (Lifespan)...")
+    create_db_and_tables()
+    logger.info("Database tables created/verified.")
+    
+    # Start the background price update job
+    price_job = asyncio.create_task(run_price_update_job(interval_seconds=60))
+    logger.info("Background price update job started.")
+    
+    yield
+    
+    # Shutdown logic
+    logger.info("Shutting down... Cleaning up background tasks.")
+    price_job.cancel()
+    try:
+        await price_job
+    except asyncio.CancelledError:
+        logger.info("Price update job successfully cancelled.")
+
+app = FastAPI(title="Bare Metals Pvt. API", lifespan=lifespan)
 
 # CORSMiddleware configuration
 app.add_middleware(
@@ -23,15 +45,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-@app.on_event("startup")
-async def on_startup():
-    logger.info("Initializing Bare Metals Pvt. API Backend...")
-    create_db_and_tables()
-    logger.info("Database tables created/verified.")
-    # Start the background price update job
-    asyncio.create_task(run_price_update_job(interval_seconds=60))
-    logger.info("Background price update job started.")
 
 # Include Routers
 app.include_router(auth.router)
@@ -56,4 +69,4 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str):
         manager.disconnect(user_id, websocket)
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=False)

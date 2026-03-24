@@ -10,7 +10,7 @@ from lib.database.models.metal import Metal
 from lib.auth import get_current_user
 from lib.events import dispatch_event
 
-router = APIRouter(prefix="/api/v1/transactions", tags=["api","v1","transactions"])
+router = APIRouter(prefix="/api/v1/transactions", tags=["transactions V1"])
 
 @router.post("/deposit", response_model=Deposit)
 async def create_deposit(

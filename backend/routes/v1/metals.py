@@ -9,7 +9,7 @@ from lib.auth import get_current_user
 
 from uuid import UUID
 
-router = APIRouter(prefix="/api/v1/metals", tags=["api","v1","metals"])
+router = APIRouter(prefix="/api/v1/metals", tags=["metals v1"])
 
 @router.get("/", response_model=List[Metal])
 async def get_metals(db: Session = Depends(get_session), current_user: Account = Depends(get_current_user)):

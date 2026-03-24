@@ -7,13 +7,13 @@ from lib.database.models.deposit import Deposit
 from lib.database.models.metal import Metal
 from lib.auth import get_current_user
 
-router = APIRouter(prefix="/api/v1/accounts", tags=["api","v1","accounts"])
+router = APIRouter(prefix="/api/v1/accounts", tags=["accounts v1"])
 
 @router.get("/me", response_model=Account)
 async def get_me(current_user: Account = Depends(get_current_user)):
     return current_user
 
-@router.get("/portfolio", tags=["valuation"])
+@router.get("/portfolio", tags=["valuation v1"])
 async def get_portfolio(
     db: Session = Depends(get_session),
     current_user: Account = Depends(get_current_user)
