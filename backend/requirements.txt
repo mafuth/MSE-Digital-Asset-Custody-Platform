@@ -7,3 +7,4 @@ python-multipart
 pydantic-settings
 yfinance
 httpx
+psycopg2-binary

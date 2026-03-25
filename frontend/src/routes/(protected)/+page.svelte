@@ -28,7 +28,11 @@
 	let totalCapacity = $derived(
 		vaults.reduce((sum, v) => sum + (v.capacity_kg || 0), 0),
 	);
-	let currentLoad = $derived(
+	// User-specific payload (Physical weight of assets they own)
+	let currentLoad = $derived(portfolio?.total_weight_kg || 0);
+
+	// Global Facility Monitor (Sum of all assets in all vaults)
+	let globalLoad = $derived(
 		vaults.reduce((sum, v) => sum + (v.current_load_kg || 0), 0),
 	);
 	let globalUtilization = $derived(

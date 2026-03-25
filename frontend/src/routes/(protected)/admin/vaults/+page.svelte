@@ -7,10 +7,24 @@
 	import { Progress } from "$lib/components/ui/progress/index.js";
 	import { Skeleton } from "$lib/components/ui/skeleton/index.js";
 	import { Badge } from "$lib/components/ui/badge/index.js";
-	import { Warehouse, ShieldCheck, MapPin } from "@lucide/svelte";
+	import { Warehouse, ShieldCheck, MapPin, Plus, Pencil } from "@lucide/svelte";
+	import VaultModal from "$lib/components/vault-modal.svelte";
+	import { Button } from "$lib/components/ui/button/index.js";
 
 	let vaults = $state<any[]>([]);
 	let loading = $state(true);
+	let showVaultModal = $state(false);
+	let selectedVault = $state<any>(null);
+
+	function openNewVault() {
+		selectedVault = null;
+		showVaultModal = true;
+	}
+
+	function openEditVault(vault: any) {
+		selectedVault = vault;
+		showVaultModal = true;
+	}
 
 	// Derived metrics
 	let totalCapacity = $derived(
@@ -48,6 +62,10 @@
 					Monitor and manage physical storage facilities.
 				</p>
 			</div>
+			<Button onclick={openNewVault} class="h-11 font-black uppercase tracking-widest text-xs gap-2 shadow-lg shadow-primary/20">
+				<Plus class="size-4" />
+				Initialize New Facility
+			</Button>
 		</div>
 
 		<div class="grid gap-6 md:grid-cols-3 mb-8">
@@ -89,6 +107,7 @@
 						<Table.Head class="h-11 text-[10px] font-bold uppercase tracking-widest">Utilization</Table.Head>
 						<Table.Head class="h-11 text-[10px] font-bold uppercase tracking-widest">Load / Capacity</Table.Head>
 						<Table.Head class="h-11 text-[10px] font-bold uppercase tracking-widest">Status</Table.Head>
+						<Table.Head class="h-11 text-[10px] font-bold uppercase tracking-widest text-right px-6">Actions</Table.Head>
 					</Table.Row>
 				</Table.Header>
 				<Table.Body>
@@ -100,6 +119,7 @@
 								<Table.Cell><Skeleton class="h-2 w-32" /></Table.Cell>
 								<Table.Cell><Skeleton class="h-6 w-20" /></Table.Cell>
 								<Table.Cell><Skeleton class="h-6 w-16" /></Table.Cell>
+								<Table.Cell class="px-6 text-right"><Skeleton class="h-8 w-8 ml-auto" /></Table.Cell>
 							</Table.Row>
 						{/each}
 					{:else}
@@ -137,6 +157,11 @@
 										{vault.status}
 									</Badge>
 								</Table.Cell>
+								<Table.Cell class="px-6 text-right">
+									<Button variant="ghost" size="sm" class="h-8 w-8 p-0" onclick={() => openEditVault(vault)}>
+										<Pencil class="size-3.5" />
+									</Button>
+								</Table.Cell>
 							</Table.Row>
 						{/each}
 					{/if}
@@ -145,3 +170,5 @@
 		</div>
 	</div>
 </div>
+
+<VaultModal bind:open={showVaultModal} vault={selectedVault} onSuccess={loadVaults} />

@@ -1,17 +1,56 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List, Dict
+from typing import List, Dict, Optional
 from lib.database.main import get_session
 from lib.database.models.account import Account
 from lib.database.models.deposit import Deposit
 from lib.database.models.metal import Metal
-from lib.auth import get_current_user
+from lib.database.models.enums import StorageType
+from lib.database.models.schemas import UserUpdate, PasswordChange
+from lib.auth import get_current_user, verify_password, get_password_hash
 
 router = APIRouter(prefix="/api/v1/accounts", tags=["accounts v1"])
 
 @router.get("/me", response_model=Account)
 async def get_me(current_user: Account = Depends(get_current_user)):
     return current_user
+
+@router.patch("/me", response_model=Account)
+async def update_me(
+    update_data: UserUpdate,
+    db: Session = Depends(get_session),
+    current_user: Account = Depends(get_current_user)
+):
+    if update_data.name is not None:
+        current_user.name = update_data.name
+    if update_data.email is not None:
+        # Check if email is already taken
+        existing_user = db.query(Account).filter(Account.email == update_data.email, Account.id != current_user.id).first()
+        if existing_user:
+            raise HTTPException(status_code=400, detail="Email already in use")
+        current_user.email = update_data.email
+        
+    db.add(current_user)
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+@router.post("/change-password")
+async def change_password(
+    data: PasswordChange,
+    db: Session = Depends(get_session),
+    current_user: Account = Depends(get_current_user)
+):
+    if not verify_password(data.current_password, current_user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Incorrect current password"
+        )
+    
+    current_user.hashed_password = get_password_hash(data.new_password)
+    db.add(current_user)
+    db.commit()
+    return {"message": "Password updated successfully"}
 
 @router.post("/buy-storage")
 async def buy_storage(
@@ -63,8 +102,8 @@ async def get_portfolio(
                 "valuation": 0.0,
                 "price_per_kg": metal.current_price_kg,
                 "storage_breakdown": {
-                    "ALLOCATED": 0.0,
-                    "UNALLOCATED": 0.0
+                    StorageType.ALLOCATED: 0.0,
+                    StorageType.UNALLOCATED: 0.0
                 }
             }
         

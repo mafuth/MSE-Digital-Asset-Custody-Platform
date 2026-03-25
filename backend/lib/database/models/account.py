@@ -1,16 +1,8 @@
 import enum
 from .base import BaseModel
+from .enums import AccountType, AccountStatus
 from sqlmodel import Field, Relationship
 from typing import List, Optional
-
-class AccountType(str, enum.Enum):
-    ADMIN = "admin"
-    CUSTOMER = "customer"
-
-class AccountStatus(str, enum.Enum):
-    ACTIVE = "active"
-    BLOCKED = "blocked"
-    REMOVED = "removed"
 
 class Account(BaseModel, table=True):
     name: str

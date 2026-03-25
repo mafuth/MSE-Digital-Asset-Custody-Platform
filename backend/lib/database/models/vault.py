@@ -1,4 +1,5 @@
 from .base import BaseModel
+from .enums import VaultStatus
 from sqlmodel import Field
 from typing import Optional
 
@@ -7,4 +8,4 @@ class Vault(BaseModel, table=True):
     location: str
     capacity_kg: float
     current_load_kg: float = Field(default=0.0)
-    status: str = Field(default="ACTIVE") # ACTIVE | FULL | MAINTENANCE
+    status: VaultStatus = Field(default=VaultStatus.ACTIVE)

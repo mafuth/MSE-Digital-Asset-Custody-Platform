@@ -44,7 +44,11 @@
 				? dateRange.start.toDate(getLocalTimeZone()).toISOString()
 				: undefined;
 			const endStr = dateRange?.end
-				? dateRange.end.toDate(getLocalTimeZone()).toISOString()
+				? (() => {
+						const d = dateRange.end.toDate(getLocalTimeZone());
+						d.setHours(23, 59, 59, 999);
+						return d.toISOString();
+					})()
 				: undefined;
 			transactions = await getTransactionHistory(
 				auth.token,
@@ -131,6 +135,14 @@
 						>
 						<Table.Head
 							class="h-11 text-[10px] font-bold uppercase tracking-widest"
+							>Reference</Table.Head
+						>
+						<Table.Head
+							class="h-11 text-[10px] font-bold uppercase tracking-widest"
+							>Facility</Table.Head
+						>
+						<Table.Head
+							class="h-11 text-[10px] font-bold uppercase tracking-widest"
 							>Status</Table.Head
 						>
 						<Table.Head
@@ -211,6 +223,20 @@
 									<span class="font-bold text-sm tracking-tight"
 										>{tx.quantity} KG</span
 									>
+								</Table.Cell>
+								<Table.Cell>
+									{#if tx.bar_ref_id}
+										<code class="text-[10px] font-mono font-bold text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100 italic">
+											{tx.bar_ref_id}
+										</code>
+									{:else}
+										<span class="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Global</span>
+									{/if}
+								</Table.Cell>
+								<Table.Cell>
+									<span class="text-[10px] font-bold text-slate-500 uppercase tracking-tight">
+										{tx.vault?.name || "N/A"}
+									</span>
 								</Table.Cell>
 								<Table.Cell>
 									<div

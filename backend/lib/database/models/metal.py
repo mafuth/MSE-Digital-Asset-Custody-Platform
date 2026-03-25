@@ -7,6 +7,7 @@ class Metal(BaseModel, table=True):
     name: str
     category: str # e.g. Precious Metals
     current_price_kg: float
+    bar_kg: float = Field(default=0.0)
     
     deposits: List["Deposit"] = Relationship(back_populates="metal")
     transactions: List["Transaction"] = Relationship(back_populates="metal")

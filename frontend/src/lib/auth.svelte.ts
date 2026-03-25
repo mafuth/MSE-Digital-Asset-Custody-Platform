@@ -25,6 +25,10 @@ class AuthState {
 		}
 	}
 
+	setUser(user: any) {
+		this.user = user;
+	}
+
 	logout() {
 		this.token = null;
 		this.user = null;

@@ -14,10 +14,10 @@ def seed_db():
         if not existing_metal:
             gold = Metal(
                 id=uuid.uuid4(),
-                code="XAU",
+                code="GOLD",
                 name="Gold",
                 category="Precious Metals",
-                current_price_kg=65000.0,
+                current_price_kg=650.0,
                 description="99.9% Pure Investment Grade Gold"
             )
             session.add(gold)

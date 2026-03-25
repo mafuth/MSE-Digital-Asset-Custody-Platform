@@ -22,6 +22,7 @@
 	import ShoppingBagIcon from "@lucide/svelte/icons/shopping-bag";
 	import { Button } from "$lib/components/ui/button/index.js";
 	import VaultIcon from "@lucide/svelte/icons/vault";
+	import ShieldCheckIcon from "@lucide/svelte/icons/shield-check";
 
 	let {
 		ref = $bindable(null),
@@ -33,7 +34,7 @@
 	const navPlatform = [
 		{
 			title: "Dashboard",
-			url: "/dashboard",
+			url: "/",
 			icon: LayoutDashboardIcon,
 		},
 		{
@@ -47,7 +48,12 @@
 		isAdmin
 			? [
 					{
-						title: "Vaults",
+						title: "Authorization Desk",
+						url: "/admin/requests",
+						icon: ShieldCheckIcon,
+					},
+					{
+						title: "Vault Hub",
 						url: "/admin/vaults",
 						icon: VaultIcon,
 					},
@@ -65,7 +71,13 @@
 			: [],
 	);
 
-	const navSecondary = [{ title: "Support", url: "#", icon: LifeBuoyIcon }];
+	const navSecondary = [
+		{
+			title: "Support",
+			url: "mailto:support@baremetalspvt.com",
+			icon: LifeBuoyIcon,
+		},
+	];
 
 	const userData = $derived({
 		name: auth.user?.name || "User",
@@ -80,7 +92,7 @@
 			<Sidebar.MenuItem>
 				<Sidebar.MenuButton size="lg">
 					{#snippet child({ props })}
-						<a href="/dashboard" {...props}>
+						<a href="/" {...props}>
 							<div
 								class="bg-primary text-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg"
 							>

@@ -27,7 +27,7 @@
 {:else if !auth.initialized}
     <div class="flex min-h-screen items-center justify-center">
         <div class="text-muted-foreground animate-pulse text-sm">
-            Initializing session...
+            We are checking a few things before we can let you in
         </div>
     </div>
 {/if}

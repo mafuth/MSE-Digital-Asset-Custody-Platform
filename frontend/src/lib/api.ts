@@ -36,6 +36,19 @@ export async function getMarketPrices(): Promise<MetalPrice[]> {
 	}
 }
 
+export async function getPublicVaults(): Promise<any[]> {
+	try {
+		const response = await fetch(`${BASE_URL}/public/vaults`);
+		if (!response.ok) {
+			throw new Error(`HTTP error! status: ${response.status}`);
+		}
+		return await response.json();
+	} catch (error) {
+		console.error('Failed to fetch public vaults:', error);
+		return [];
+	}
+}
+
 export async function login(data: UserLogin): Promise<Token> {
 	const response = await fetch(`${BASE_URL}/auth/login`, {
 		method: 'POST',
@@ -68,6 +81,38 @@ export async function getMe(token: string): Promise<any> {
 	});
 	if (!response.ok) {
 		throw new Error('Failed to fetch user profile');
+	}
+	return await response.json();
+}
+
+export async function updateMe(token: string, data: { name?: string; email?: string }): Promise<any> {
+	const response = await fetch(`${BASE_URL}/accounts/me`, {
+		method: 'PATCH',
+		headers: {
+			'Authorization': `Bearer ${token}`,
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify(data)
+	});
+	if (!response.ok) {
+		const err = await response.json();
+		throw new Error(err.detail || 'Failed to update profile');
+	}
+	return await response.json();
+}
+
+export async function changePassword(token: string, data: any): Promise<any> {
+	const response = await fetch(`${BASE_URL}/accounts/change-password`, {
+		method: 'POST',
+		headers: {
+			'Authorization': `Bearer ${token}`,
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify(data)
+	});
+	if (!response.ok) {
+		const err = await response.json();
+		throw new Error(err.detail || 'Failed to change password');
 	}
 	return await response.json();
 }
@@ -269,6 +314,88 @@ export async function addMetal(token: string, data: any): Promise<any> {
 	if (!response.ok) {
 		const err = await response.json();
 		throw new Error(err.detail || 'Failed to add metal');
+	}
+	return await response.json();
+}
+
+export async function addVault(token: string, data: any): Promise<any> {
+	const response = await fetch(`${BASE_URL}/admin/vaults`, {
+		method: 'POST',
+		headers: {
+			'Authorization': `Bearer ${token}`,
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify(data)
+	});
+	if (!response.ok) {
+		const err = await response.json();
+		throw new Error(err.detail || 'Failed to add vault');
+	}
+	return await response.json();
+}
+
+export async function updateVault(token: string, vaultId: string, data: any): Promise<any> {
+	const response = await fetch(`${BASE_URL}/admin/vaults/${vaultId}`, {
+		method: 'PATCH',
+		headers: {
+			'Authorization': `Bearer ${token}`,
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify(data)
+	});
+	if (!response.ok) {
+		const err = await response.json();
+		throw new Error(err.detail || 'Failed to update vault');
+	}
+	return await response.json();
+}
+
+export async function updateMetal(token: string, metalId: string, data: any): Promise<any> {
+	const response = await fetch(`${BASE_URL}/admin/metals/${metalId}`, {
+		method: 'PATCH',
+		headers: {
+			'Authorization': `Bearer ${token}`,
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify(data)
+	});
+	if (!response.ok) {
+		const err = await response.json();
+		throw new Error(err.detail || 'Failed to update metal');
+	}
+	return await response.json();
+}
+
+export async function getPendingRequests(token: string): Promise<any[]> {
+	const response = await fetch(`${BASE_URL}/admin/requests`, {
+		headers: { Authorization: `Bearer ${token}` }
+	});
+	if (!response.ok) {
+		throw new Error('Failed to fetch pending requests');
+	}
+	return await response.json();
+}
+
+export async function approveRequest(token: string, requestId: string): Promise<any> {
+	const response = await fetch(`${BASE_URL}/admin/requests/${requestId}/approve`, {
+		method: 'POST',
+		headers: { Authorization: `Bearer ${token}` }
+	});
+	if (!response.ok) {
+		const err = await response.json();
+		throw new Error(err.detail || 'Failed to approve request');
+	}
+	return await response.json();
+}
+
+export async function rejectRequest(token: string, requestId: string): Promise<any> {
+	const response = await fetch(`${BASE_URL}/admin/requests/${requestId}/reject`, {
+		method: 'POST',
+		headers: { Authorization: `Bearer ${token}` }
+	});
+	if (!response.ok) {
+		const err = await response.json();
+		throw new Error(err.detail || 'Failed to reject request');
 	}
 	return await response.json();
 }

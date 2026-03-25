@@ -4,7 +4,8 @@ from jose import JWTError, jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
-from lib.database.models.account import Account, AccountStatus
+from lib.database.models.account import Account
+from lib.database.models.enums import AccountStatus
 from lib.database.main import get_session
 from lib.config import get_settings
 import bcrypt

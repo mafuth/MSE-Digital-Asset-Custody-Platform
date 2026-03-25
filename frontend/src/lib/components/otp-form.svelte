@@ -10,7 +10,8 @@
 	import { Button } from "$lib/components/ui/button/index.js";
 	import { cn } from "$lib/utils.js";
 	import { ChevronLeft, Loader2 } from "@lucide/svelte";
-	import { verifyOtp } from "$lib/api";
+	import { verifyOtp, getMarketPrices, type MetalPrice } from "$lib/api";
+	import { Scale, Database } from "@lucide/svelte";
 	import type { HTMLAttributes } from "svelte/elements";
 
 	let { class: className, ...restProps }: HTMLAttributes<HTMLDivElement> =
@@ -22,6 +23,11 @@
 	let loading = $state(false);
 	let error = $state<string | null>(null);
 	let message = $state<string | null>(null);
+	let prices = $state<MetalPrice[]>([]);
+
+	$effect(() => {
+		getMarketPrices().then((res) => (prices = res));
+	});
 
 	async function handleSubmit(e: SubmitEvent) {
 		e.preventDefault();
@@ -41,11 +47,7 @@
 
 <div class={cn("relative flex flex-col gap-6", className)} {...restProps}>
 	<div class="absolute right-4 top-4 z-10">
-		<Button
-			size="icon"
-			href="/login"
-			class="size-8 rounded-full border"
-		>
+		<Button size="icon" href="/login" class="size-8 rounded-full border">
 			<ChevronLeft class="size-4" />
 			<span class="sr-only">Back to Login</span>
 		</Button>
@@ -102,12 +104,50 @@
 					</div>
 				</FieldGroup>
 			</form>
-			<div class="bg-muted relative hidden md:block">
-				<img
-					src="/login-side.gif"
-					alt="placeholder"
-					class="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-				/>
+			<div
+				class="bg-slate-50 relative hidden md:flex flex-col items-center justify-center p-8 overflow-hidden border-l"
+			>
+				<div
+					class="absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent animate-pulse"
+				></div>
+				<div class="w-full space-y-4 max-w-[280px] z-10">
+					{#if prices.length > 0}
+						{#each prices as metal}
+							<div
+								class="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-lg shadow-sm hover:border-primary/30 transition-all group"
+							>
+								<div class="flex items-center gap-3">
+									<Scale
+										class="size-4 text-primary transition-transform group-hover:scale-110"
+									/>
+									<div class="flex flex-col">
+										<span
+											class="text-[10px] font-black text-slate-900 uppercase"
+											>{metal.name}</span
+										>
+									</div>
+								</div>
+								<div class="text-right">
+									<p
+										class="text-[10px] font-black text-slate-950 tracking-tighter"
+									>
+										${metal.price_kg.toLocaleString()}
+									</p>
+								</div>
+							</div>
+						{/each}
+					{:else}
+						<div
+							class="py-12 flex flex-col items-center gap-2 opacity-20"
+						>
+							<Database class="size-6 text-slate-900" />
+							<span
+								class="text-[8px] font-black uppercase tracking-widest text-slate-900"
+								>Loading Metals...</span
+							>
+						</div>
+					{/if}
+				</div>
 			</div>
 		</Card.Content>
 	</Card.Root>

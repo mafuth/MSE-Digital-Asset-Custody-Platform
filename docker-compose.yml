@@ -1,0 +1,84 @@
+services:
+  db:
+    image: yugabytedb/yugabyte:latest
+    container_name: mse-cim-db
+    restart: unless-stopped
+    command: bin/yugabyted start --daemon=false
+    environment:
+      POSTGRES_USER: ${DB_USERNAME:-yugabyte}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-yugabyte}
+      POSTGRES_DB: ${DB_DATABASE:-yugabyte}
+    ports:
+      - "5433:5433"
+    volumes:
+      - dbdata:/root/var
+    networks:
+      - mse-cim-network
+
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    container_name: pgbouncer
+    ports:
+      - "6432:6432"
+    environment:
+      - ADMIN_USERS=${DB_USERNAME:-yugabyte}
+      - STATS_USERS=${DB_USERNAME:-yugabyte}
+      - DB_USER=${DB_USERNAME:-yugabyte}
+      - DB_PASSWORD=${DB_PASSWORD:-yugabyte}
+      - DB_HOST=db
+      - DB_PORT=5433
+      - POOL_MODE=session
+      - LISTEN_ADDR=0.0.0.0
+      - LISTEN_PORT=6432
+      - MAX_CLIENT_CONN=100
+      - DEFAULT_POOL_SIZE=20
+      - AUTH_TYPE=plain
+    restart: unless-stopped
+    depends_on:
+      - db
+    networks:
+      - mse-cim-network
+
+  backend:
+    build:
+      context: ./backend
+    container_name: mse_backend
+    depends_on:
+      pgbouncer:
+        condition: service_started
+    environment:
+      - DATABASE_URL=postgresql://${DB_USERNAME:-yugabyte}:${DB_PASSWORD:-yugabyte}@pgbouncer:6432/${DB_DATABASE:-yugabyte}
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-here}
+    networks:
+      - mse-cim-network
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: mse_frontend
+    depends_on:
+      - backend
+    environment:
+      - NODE_ENV=production
+    networks:
+      - mse-cim-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: mse_proxy
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "8000:80"
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - mse-cim-network
+
+networks:
+  mse-cim-network:
+    driver: bridge
+
+volumes:
+  dbdata:
